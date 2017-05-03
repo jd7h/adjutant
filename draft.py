@@ -1,13 +1,14 @@
 #!/usr/bin/python
+
 import urllib.request
 import logging
 import html2text
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize # needs punkt package from nltk
 
-PROJECTNAME = "Profiler"
+PROJECTNAME = "Adjutant"
 VERSION = "0.1"
-REPOSITORY_URL = ""
+REPOSITORY_URL = "https://github.com/jd7h/adjutant"
 
 def get_webpage(url):
     try:
@@ -31,10 +32,6 @@ def extract_html(url, conn):
         logging.error("Read error for %s: %s",url,type(e))
         logging.debug("repr(e) = %s",repr(e))
     return content
-
-def crawl(content, internal, depth=5):
-    # find all links
-    # if internal: find all 
 
 def extract_text(html):
     textmaker = html2text.HTML2Text()
