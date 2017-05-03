@@ -34,6 +34,7 @@ def extract_html(url, conn):
     except Exception as e:
         logging.error("Read error for %s: %s",url,type(e))
         logging.debug("repr(e) = %s",repr(e))
+        return ""
     return content
 
 def extract_text(html):
