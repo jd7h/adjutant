@@ -80,7 +80,7 @@ def __main__(url,n,internal=True):
         print(sorted_wordlist[:n+1])
     else:
         print(sorted_wordlist)
-    return counted_list
+    return sorted_wordlist
 
 def create_list_from_corpus(text):
     # make wordlist
