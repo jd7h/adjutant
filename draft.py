@@ -71,7 +71,9 @@ def sort_wordlist(counted_wordlist):
 
 def __main__(url,n,internal=True):
     # todo: process arguments
-    text = process_page(url,n,internal)
+    processed_urls = []
+    processed_pages = []
+    text = process_page(url,n,processed_urls,processed_pages,internal)
     sorted_wordlist = create_list_from_corpus(text)
     # report
     if len(sorted_wordlist) > n:
@@ -105,22 +107,34 @@ def find_links(url,html,only_internal):
     else:
         targetdomain = getdomain(url)
         links = [urljoin(url,a.get("href")) for a in alist]
-        return links,[link for link in links if getdomain(link) == targetdomain]
+        return [link for link in links if getdomain(link) == targetdomain]
 
 # note: exclude already searched pages!
-def process_page(url,n,internal):
-    # download webpage
-    conn = get_webpage(url)
-    html = extract_html(url, conn)
-    children = []
-    # crawl webpage with depth n
-    if n > 1:
-        for linked_page in find_links(url,html,internal):
-            child = process_page(linked_page,n-1,internal)
-            children.append(child)
-    # extract text
-    text = extract_text(html)
-    return text + " ".join(children)
+def process_page(url,n,processed_urls,processed_pages,internal):
+    print("Processing page:",url,"with depth",n)
+    if url in processed_urls:
+        print("Url already processed.")
+        return ""
+    else:
+        # download webpage
+        conn = get_webpage(url)
+        html = extract_html(url, conn)
+        if html in processed_pages:
+            processed_urls.append(url)
+            print("Page contents already processed.")
+            return ""
+        # extract text
+        text = extract_text(html)
+        processed_urls.append(url)
+        processed_pages.append(html)
+        children = []
+        # crawl webpage with depth n
+        if n > 1:
+            print("links:",find_links)
+            for linked_page in find_links(url,html,internal):
+                child = process_page(linked_page,n-1,processed_urls,processed_pages,internal)
+                children.append(child)
+        return text + " ".join(children)
     
 
 def test(url):
