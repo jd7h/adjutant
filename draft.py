@@ -3,8 +3,11 @@
 import urllib.request
 import logging
 import html2text
+from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize # needs punkt package from nltk
+from urllib.parse import urlparse
+from urllib.parse import urljoin
 
 PROJECTNAME = "Adjutant"
 VERSION = "0.1"
@@ -65,14 +68,18 @@ def sort_wordlist(counted_wordlist):
     return sorted(counted_wordlist.items(), key=lambda x: x[1], reverse=True)
     
 
-def __main__(url,n):
-# todo: process arguments
-    # download webpage
-    conn = get_webpage(url)
-    # todo: crawl webpage
-    # extract text
-    html = extract_html(url, conn)
-    text = extract_text(html)
+def __main__(url,n,internal=True):
+    # todo: process arguments
+    text = process_page(url,n,internal)
+    sorted_wordlist = create_list_from_corpus(text)
+    # report
+    if len(sorted_wordlist) > n:
+        print(sorted_wordlist[:n+1])
+    else:
+        print(sorted_wordlist)
+    return counted_list
+
+def create_list_from_corpus(text):
     # make wordlist
     wordlist = make_wordlist(text)
     # count words
@@ -81,12 +88,39 @@ def __main__(url,n):
     common_words = ["wij"] + list("!?/\@#$%^&*()-_=+.>,<;:'\"[]{}") + stopwords.words('english') + stopwords.words('dutch')
     counted_list = remove_common_words(counted_list, common_words)
     sorted_wordlist = sort_wordlist(counted_list)
-    # report
-    if len(sorted_wordlist) > n:
-        print(sorted_wordlist[:n+1])
+    return sorted_wordlist
+
+def getdomain(url):
+    parsed_uri = urlparse(url)
+    domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
+    return domain
+
+# note: www.website.com and website.com are different domains. :/
+def find_links(url,html,only_internal):
+    soup = BeautifulSoup(html,'html.parser')
+    alist = soup.findAll("a")
+    if not only_internal:
+        return [urljoin(url,a.get("href")) for a in alist]
     else:
-    	print(sorted_wordlist)
-    return counted_list
+        targetdomain = getdomain(url)
+        links = [urljoin(url,a.get("href")) for a in alist]
+        return links,[link for link in links if getdomain(link) == targetdomain]
+
+# note: exclude already searched pages!
+def process_page(url,n,internal):
+    # download webpage
+    conn = get_webpage(url)
+    html = extract_html(url, conn)
+    children = []
+    # crawl webpage with depth n
+    if n > 1:
+        for linked_page in find_links(url,html,internal):
+            child = process_page(linked_page,n-1,internal)
+            children.append(child)
+    # extract text
+    text = extract_text(html)
+    return text + " ".join(children)
+    
 
 def test(url):
     # download webpage
