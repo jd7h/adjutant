@@ -47,12 +47,8 @@ def extract_html(conn):
         logging.error("repr(e) = %s",repr(e))
         return ""
 
-
-# ## Parse html for links within the same domain
-
-
 def getdomain(url):
-    """Compute the TLD from a URL. Includes either 'www.' or not."""
+    """Compute the TLD from a URL, with or without prefix 'www'."""
     parsed_uri = urlparse(url)
     netloc = parsed_uri.netloc
     subdomains = netloc.split(".")
@@ -72,7 +68,7 @@ def getcompletedomain(url):
 def find_links(url,html,only_internal):
     """Find all links in the html of a webpage. Returns a list with links.
     
-    url -- a URL, used for matching links to domain
+    url -- a URL which will be used for matching found links to domain
     html -- Decoded HTML of this URL
     only_internal -- If this flag is set, this function only returns links within the same domain.
     """
@@ -85,15 +81,12 @@ def find_links(url,html,only_internal):
         links = [urljoin(url,a.get("href")) for a in alist]
         return [link for link in links if getdomain(link) == targetdomain]
 
-
-# ## Extract plaintext from html
-
 def html2plaintext(html):
     """Return the plaintext (what the user sees) from decoded HTML. Naive implementation: does not
     parse HTML but just removes everything between carets, comments, script and style tags.
     Removes newlines and multiple whitespace."""
     text = re.sub("\r","\n",html) # unify newlines
-    text = re.sub("\n"," ",text) # unify newlines
+    text = re.sub("\n"," ",text) # newlines to space
     text = re.sub("<script.*?\/script>"," ",text) # javascript
     text = re.sub("<style.*?\/style>"," ",text) # css
     text = re.sub("(<!--.*?-->)", " ", text, flags=re.MULTILINE) # comments
@@ -103,18 +96,14 @@ def html2plaintext(html):
 
 
 def make_wordlist(text):
-    """Turn a string into a list of tokens (words) with the tokenizer from nltk. Optimized for text, not 
-    special text like code, emailaddresses, etc."""
+    """Turn a string into a list of tokens (words) with the tokenizer from nltk. Drawback:
+    Optimized for text, not special text like code, emailaddresses, etc."""
     return word_tokenize(text.lower()) # word_tokenize from nltk
     # dit gaat nog fout voor emailadressen
     
-
-# In[9]:
-
-
 def count_words(words_from_content):
     """Takes a list of words and makes a dictionary where the keys are words 
-    and the values are integers, ie. frequency of occurrence."""# words_from_content is een lijst
+    and the values are integers, ie. frequency of occurrence."""
     counted_wordlist = {}
     for word in words_from_content:
         if word not in counted_wordlist.keys():
@@ -122,8 +111,6 @@ def count_words(words_from_content):
         else:
             counted_wordlist[word] += 1
     return counted_wordlist
-
-
 
 def remove_common_words(counted_wordlist, common_words):
     """Given a list of stopwords, removes those stopwords from the frequence dictionary counted_wordlist
