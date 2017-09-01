@@ -1,13 +1,3 @@
-
-# coding: utf-8
-
-# # Adjutant
-
-# ## Obtain webpage and html
-
-# In[60]:
-
-
 import urllib.request
 import logging
 import html as htmlparser
@@ -16,7 +6,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from nltk.tokenize import word_tokenize
-
+from nltk.corpus import stopwords
 
 PROJECTNAME = "Adjutant"
 VERSION = "0.1"
@@ -133,7 +123,7 @@ def count_words(words_from_content):
             counted_wordlist[word] += 1
     return counted_wordlist
 
-from nltk.corpus import stopwords
+
 
 def remove_common_words(counted_wordlist, common_words):
     """Given a list of stopwords, removes those stopwords from the frequence dictionary counted_wordlist
