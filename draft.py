@@ -8,47 +8,50 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize # needs punkt package from nltk
 from urllib.parse import urlparse
 from urllib.parse import urljoin
+import re
 
 PROJECTNAME = "Adjutant"
 VERSION = "0.1"
 REPOSITORY_URL = "https://github.com/jd7h/adjutant"
 
+TIMEOUT = 60 #seconds
+
 def get_webpage(url):
+    logging.debug("Request for %s", url)
     try:
-        logging.debug("Request for %s", url)
         conn = urllib.request.urlopen(
             urllib.request.Request(url, headers={
-                'User-Agent': PROJECTNAME + "/" + VERSION + ", " + REPOSITORY_URL}),timeout=5)
+                'User-Agent': PROJECTNAME + "/" + VERSION + ", " + REPOSITORY_URL}),timeout=TIMEOUT)
     except Exception as e:
         logging.error("%s error for %s",type(e),url)
         logging.error("repr(e) = %s",repr(e))
     return conn
 
-def extract_html(url, conn):
+def extract_html(conn):
+    logging.debug("Decoding contents of %s",conn.geturl())
     try:
-        logging.debug("Decoding contents of %s",url)
         if conn.headers.get_content_charset() is None:
             content = conn.read().decode()
         else:
             content = conn.read().decode(conn.headers.get_content_charset())
     except Exception as e:
-        logging.error("Read error for %s: %s",url,type(e))
+        logging.error("Read error for %s: %s",conn.geturl(),type(e))
         logging.debug("repr(e) = %s",repr(e))
         return ""
-    return content
 
-def extract_text(html):
-    textmaker = html2text.HTML2Text()
-    textmaker.ignore_images = True;
-    textmaker.ignore_links = True;
-    textmaker.ignore_emphasis = True;
-    text = textmaker.handle(html)
-    return text
+def html2plaintext(html):
+  text = re.sub("(<!--.*?-->)", "", text, flags=re.MULTILINE)	// comments
+  text = re.sub("<script.*?\/script>","",text) // javascript
+  text = re.sub("(<[^>]+>)", "", text, flags=re.MULTILINE) // html tags
+  text = re.sub("\r","\n",text) // unify newlines
+  text = re.sub("[\W]*\n[\W]*","\n",text)
+  return text
 
 def make_wordlist(text):
-    return word_tokenize(text.lower())
+    return word_tokenize(text.lower()) # word_tokenize from nltk
+    # dit gaat nog fout voor emailadressen
 
-def count_words(words_from_content):
+def count_words(words_from_content): # words_from_content is een lijst
     counted_wordlist = {}
     for word in words_from_content:
         if word not in counted_wordlist.keys():
@@ -62,7 +65,6 @@ def remove_common_words(counted_wordlist, common_words):
         if word in counted_wordlist.keys():
             counted_wordlist.pop(word)
     return counted_wordlist
-
 
 
 def sort_wordlist(counted_wordlist):
